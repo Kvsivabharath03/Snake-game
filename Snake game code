@@ -1,0 +1,201 @@
+//Snake game using C++
+#include <iostream>
+#include <graphics.h>
+#include <unistd.h>
+#include <cstdlib>
+#include <time.h>
+class snake
+{
+	typedef struct k
+	{
+		int x, y;
+		struct k *prev, *next;
+	} node;
+	node *head = NULL, *tail = NULL, *newnode = NULL, *temp = NULL;
+
+	enum direction
+	{
+		TOP = 0,
+		DOWN,
+		LEFT,
+		RIGHT
+	};
+	direction dir;
+
+	int fx, fy, hx, hy, score;
+
+public:
+	snake();
+	bool gameover;
+	void draw();
+	void input();
+	void logic();
+	void disfruit();
+	void dissnake();
+	void disgameover();
+};
+snake::snake()
+{
+	//initialization
+	gameover = false;
+	score = 0;
+	head = (node *)malloc(sizeof(node));
+	tail = (node *)malloc(sizeof(node));
+	head->next = tail;
+	tail->prev = head;
+	head->prev = tail->next = NULL;
+	dir = TOP;
+	//fruit and head position
+	srand(time(NULL));
+	fx = rand() % 20;
+	fy = rand() % 20;
+	head->x = 10;
+	head->y = 10;
+	tail->x = 20;
+	tail->y = 20;
+	//display board
+	int gd = DETECT, gm;
+	initgraph(&gd, &gm, (char *)"");
+	initwindow(1500, 750, "SNAKE GAME", 0, 0, 0, 1);
+	setbkcolor(WHITE);
+	cleardevice();
+	setcolor(8);
+	setfillstyle(SOLID_FILL, 8);
+	bar(80, 80, 540, 540);
+	floodfill(81, 81, 8);
+	setfillstyle(SOLID_FILL, BLACK);
+	bar(100, 100, 520, 520);
+	floodfill(101, 101, BLACK);
+}
+void snake::draw()
+{
+	disfruit();
+	dissnake();
+	char a[5];
+	setcolor(BLACK);
+	settextstyle(8, 0, 5);
+	sprintf(a, "%d", score);
+	outtextxy(100, 550, (char *)"SCORE : ");
+	outtextxy(300, 550, (char *)a);
+}
+void snake::input()
+{
+	if (kbhit())
+	{
+		switch (getch())
+		{
+		case 'w':
+			dir = TOP;
+			break;
+		case 's':
+			dir = DOWN;
+			break;
+		case 'a':
+			dir = LEFT;
+			break;
+		case 'd':
+			dir = RIGHT;
+			break;
+		case 'q':
+			exit(0);
+		}
+	}
+}
+void snake::logic()
+{
+	//gameover condition
+	temp = head->next;
+	while (temp->next != NULL)
+	{
+		if (((temp->x) == (head->x)) && (temp->y) == (head->y))
+			gameover = true;
+		temp = temp->next;
+	}
+	//condition if the snake eats the fruit
+	if ((hx == fx) && (hy == fy))
+	{
+		srand(time(NULL));
+		fx = rand() % 20;
+		fy = rand() % 20;
+		++score;
+		newnode = (node *)malloc(sizeof(node));
+		newnode->next = NULL;
+		tail->next = newnode;
+		newnode->prev = tail;
+		tail = newnode;
+	}
+	//move the snake according to the direction
+	hx = head->x;
+	hy = head->y;
+	switch (dir)
+	{
+	case TOP:
+		--hy;
+		break;
+	case DOWN:
+		++hy;
+		break;
+	case LEFT:
+		--hx;
+		break;
+	case RIGHT:
+		++hx;
+		break;
+	}
+	temp = tail;
+	while (temp->prev != NULL)
+	{
+		temp->x = temp->prev->x;
+		temp->y = temp->prev->y;
+		temp = temp->prev;
+	}
+	if (hx > 20)
+		hx = 0;
+	if (hx < 0)
+		hx = 20;
+	if (hy > 20)
+		hy = 0;
+	if (hy < 0)
+		hy = 20;
+	head->x = hx;
+	head->y = hy;
+}
+void snake::disfruit()
+{
+	setcolor(RED);
+	setfillstyle(SOLID_FILL, RED);
+	circle(20 * fx + 110, 20 * fy + 110, 6);
+	floodfill(20 * fx + 110, 20 * fy + 110, RED);
+}
+void snake::dissnake()
+{
+	setcolor(WHITE);
+	setfillstyle(SOLID_FILL, WHITE);
+	circle(20 * (head->x) + 110, 20 * (head->y) + 110, 9);
+	floodfill(20 * (head->x) + 110, 20 * (head->y) + 110, WHITE);
+
+	setcolor(BLACK);
+	setfillstyle(SOLID_FILL, BLACK);
+	circle(20 * (tail->x) + 110, 20 * (tail->y) + 110, 9);
+	floodfill(20 * (tail->x) + 110, 20 * (tail->y) + 110, BLACK);
+}
+void snake::disgameover()
+{
+	setcolor(BLACK);
+	settextstyle(8, 0, 5);
+	outtextxy(100, 600, (char *)"GAME OVER");
+	getch();
+}
+int main()
+{
+	snake ob;
+	getch();
+	while (!ob.gameover)
+	{
+		ob.draw();
+		ob.input();
+		ob.logic();
+		Sleep(200);
+	}
+	ob.disgameover();
+}
